@@ -83,7 +83,7 @@ class FullyConnectedNet(object):
             if i == 0:
                 self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, (input_dim, hidden_dims[0]))
                 self.params['b' + str(i+1)] = np.zeros(hidden_dims[0])
-            if i == self.num_layers-1:
+            elif i == self.num_layers-1:
                 self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, (hidden_dims[i-1], num_classes))
                 self.params['b' + str(i+1)] = np.zeros(num_classes)
             else:
