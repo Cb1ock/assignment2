@@ -230,7 +230,23 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        cache = {}
+        sample_mean = x.mean(axis = 0) # (D, )
+        sample_var = x.var(axis = 0) # (D, )
+        X_head = (x - sample_mean)/np.sqrt(sample_var + eps) # (N, D)
+        out = X_head*gamma + beta # gamma and beta are (D, )
+
+        running_mean = momentum*running_mean + (1-momentum)*sample_mean
+        running_var = momentum*running_var + (1-momentum)*sample_var
+
+        cache['x'] = x
+        cache['X_head'] = X_head
+        cache['gamma'] = gamma
+        cache['beta'] = beta
+        cache['sample_mean'] = sample_mean
+        cache['sample_var'] = sample_var
+        cache['eps'] = eps
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -245,7 +261,14 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        cache = {}
+        X_head = (x - running_mean)/np.sqrt(running_var + eps)
+        out = X_head*gamma + beta
+        
+        cache['X_head'] = X_head
+        cache['gamma'] = gamma
+        cache['beta'] = beta
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -286,7 +309,21 @@ def batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    beta = cache['beta']
+    gamma = cache['gamma']
+    x = cache['x']
+    x_head = cache['X_head']
+    mean = cache['sample_mean']
+    var = cache['sample_var']
+    eps = cache['eps']
+
+    dbeta = dout.sum(axis = 0)
+    dgamma = np.sum(dout*x_head, axis=0) # 为什么要按元素相乘？？？
+
+    dx_1 = dout*gamma # (N, D)
+    dx_2 = dx_1/np.sqrt(var + eps) # (N, D)
+    dx = dx_2 * np.ones_like(x) # (N, D)
+   
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
