@@ -320,11 +320,13 @@ def batchnorm_backward(dout, cache):
     dbeta = dout.sum(axis = 0)
     dgamma = np.sum(dout*x_head, axis=0) # 为什么要按元素相乘？？？
 
-    dx_1 = dout*gamma # (N, D)
-    dx_2 = dx_1/np.sqrt(var + eps) # (N, D)
-    dx = dx_2 * np.ones_like(x) # (N, D)
-   
+    N = x.shape[0]
 
+    dx_head = dout*gamma # (N, D)
+    dvar = np.sum(dx_head*(x - mean)*(-1/2)*(var + eps)**(-3/2), axis=0) # (D, )
+    dmean = np.sum(dx_head*(-1)/(var + eps)**(1/2) + dvar*(-2/N)*(x - mean), axis=0) # (D, )
+    dx = dx_head/(var + eps)**(1/2) + dmean/N + dvar*(2/N)*(x - mean) # (N, D)
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
