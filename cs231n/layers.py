@@ -318,7 +318,7 @@ def batchnorm_backward(dout, cache):
     eps = cache['eps']
 
     dbeta = dout.sum(axis = 0)
-    dgamma = np.sum(dout*x_head, axis=0) # 为什么要按元素相乘？？？# NOTE:因为勾吧只能这样
+    dgamma = np.sum(dout*x_head, axis=0) #XXX: 为什么要按元素相乘？？？# NOTE: 因为勾吧只能这样
 
     N = x.shape[0]
     
@@ -369,7 +369,7 @@ def batchnorm_backward_alt(dout, cache):
     eps = cache['eps']
 
     dbeta = dout.sum(axis = 0)
-    dgamma = np.sum(dout*x_head, axis=0) # 为什么要按元素相乘？？？
+    dgamma = np.sum(dout*x_head, axis=0)
 
     N = x.shape[0]
 
