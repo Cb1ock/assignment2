@@ -90,14 +90,13 @@ class FullyConnectedNet(object):
                 self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, (hidden_dims[i-1], hidden_dims[i]))
                 self.params['b' + str(i+1)] = np.zeros(hidden_dims[i])
 
-        if self.normalization == "batchnorm":
+        if self.normalization == "batchnorm" or self.normalization == 'layernorm':
             for i in range(self.num_layers):
                 if i == self.num_layers - 1:
                     break
                 self.params['gamma' + str(i+1)] = np.ones(hidden_dims[i])
                 self.params['beta' + str(i+1)] = np.zeros(hidden_dims[i])
             
-
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -118,10 +117,11 @@ class FullyConnectedNet(object):
         # of the first batch normalization layer, self.bn_params[1] to the forward
         # pass of the second batch normalization layer, etc.
         self.bn_params = []
+        self.ln_params = []
         if self.normalization == "batchnorm":
             self.bn_params = [{"mode": "train"} for i in range(self.num_layers - 1)]
         if self.normalization == "layernorm":
-            self.bn_params = [{} for i in range(self.num_layers - 1)]
+            self.ln_params = [{} for i in range(self.num_layers - 1)]
 
         # Cast all parameters to the correct datatype.
         for k, v in self.params.items():
@@ -188,7 +188,17 @@ class FullyConnectedNet(object):
                     )
 
         elif self.normalization == 'layernorm':
-            pass
+            for i in range(self.num_layers):
+                if i == 0:
+                    out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_layernorm_relu_forward(
+                        X, self.params['W' + str(i + 1)], self.params['b' + str(i + 1)], self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.ln_params[i]
+                    )
+                elif i == self.num_layers - 1:
+                    out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_forward(out['out' + str(i)], self.params['W' + str(i+1)], self.params['b' + str(i+1)])
+                else:
+                    out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_layernorm_relu_forward(
+                        out['out' + str(i)], self.params['W' + str(i + 1)], self.params['b' + str(i+1)], self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.ln_params[i]
+                    )
 
         else:
             for i in range(self.num_layers):
@@ -241,8 +251,14 @@ class FullyConnectedNet(object):
                 grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
                 
         elif self.normalization == 'layernorm':
-
-            pass
+            for i in range(self.num_layers, 0, -1):
+                if i == self.num_layers:
+                    dout, grads['W' + str(i)], grads['b' + str(i)] = affine_backward(dout, cache['cache' + str(i)])
+                else:
+                    dout, grads['W' + str(i)], grads['b' + str(i)], grads['gamma' + str(i)], grads['beta' + str(i)] = affine_layernorm_relu_backward(
+                        dout, cache['cache'+str(i)])
+                grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
+                
 
         else:
             for i in range(self.num_layers, 0, -1):

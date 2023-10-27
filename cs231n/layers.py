@@ -318,7 +318,7 @@ def batchnorm_backward(dout, cache):
     eps = cache['eps']
 
     dbeta = dout.sum(axis = 0)
-    dgamma = np.sum(dout*x_head, axis=0) # 为什么要按元素相乘？？？
+    dgamma = np.sum(dout*x_head, axis=0) # 为什么要按元素相乘？？？# NOTE:因为勾吧只能这样
 
     N = x.shape[0]
     
@@ -422,7 +422,19 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    cache = {}
+    mean = np.mean(x, axis = 1, keepdims=True) #(N, )
+    var = x.var(axis = 1, keepdims=True) # (N, )
+    x_head = (x - mean)/np.sqrt(var + eps) # (N, D)
+    out = x_head*gamma + beta # gamma and beta are (D, )
+
+    cache['x'] = x
+    cache['x_head'] = x_head
+    cache['gamma'] = gamma
+    cache['beta'] = beta
+    cache['mean'] = mean
+    cache['var'] = var
+    cache['eps'] = eps
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -456,8 +468,23 @@ def layernorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    beta = cache['beta']
+    gamma = cache['gamma']
+    x = cache['x']
+    x_head = cache['x_head']
+    mean = cache['mean']
+    var = cache['var']
+    eps = cache['eps']
 
+    dbeta = dout.sum(axis = 0)
+    dgamma = np.sum(dout*x_head, axis = 0)
+
+    _, D = x.shape
+
+    dx_head = dout*gamma #(N, D)
+    dvar = np.sum(dx_head*(x - mean)*(-1/2)*(var + eps)**(-3/2), axis=1, keepdims=True)# (N, )
+    dmean = np.sum(dx_head*(-1)/(var + eps)**(1/2) + dvar*(-2/D)*(x - mean), axis=1, keepdims=True) # (N, )
+    dx = dx_head/(var + eps)**(1/2) + dmean/D + dvar*(2/D)*(x - mean) # (N, D)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
