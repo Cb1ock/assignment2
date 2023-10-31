@@ -485,6 +485,7 @@ def layernorm_backward(dout, cache):
     dvar = np.sum(dx_head*(x - mean)*(-1/2)*(var + eps)**(-3/2), axis=1, keepdims=True)# (N, )
     dmean = np.sum(dx_head*(-1)/(var + eps)**(1/2) + dvar*(-2/D)*(x - mean), axis=1, keepdims=True) # (N, )
     dx = dx_head/(var + eps)**(1/2) + dmean/D + dvar*(2/D)*(x - mean) # (N, D)
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
