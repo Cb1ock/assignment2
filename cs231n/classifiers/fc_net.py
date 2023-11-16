@@ -175,39 +175,62 @@ class FullyConnectedNet(object):
         
             
         if self.normalization == 'batchnorm':
+
             for i in range(self.num_layers):
                 if i == 0:
                     out['out' + str(i+1)], cache['cache' + str(i+1)] = affine_batchnorm_relu_forward(
                         X, self.params['W' + str(i + 1)], self.params['b' + str(i + 1)], self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.bn_params[i]
                     )
+                    if self.use_dropout:
+                        out['out' + str(i+1)], cache['dropout' + str(i+1)] = dropout_forward(out['out' + str(i+1)], self.dropout_param)
+
                 elif i == self.num_layers - 1:
                     out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_forward(out['out' + str(i)], self.params['W' + str(i+1)], self.params['b' + str(i+1)])
                 else:
                     out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_batchnorm_relu_forward(
                         out['out' + str(i)], self.params['W' + str(i + 1)], self.params['b' + str(i+1)], self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.bn_params[i]
                     )
+                    if self.use_dropout:
+                        out['out' + str(i+1)], cache['dropout' + str(i+1)] = dropout_forward(out['out' + str(i+1)], self.dropout_param)
+
 
         elif self.normalization == 'layernorm':
+
             for i in range(self.num_layers):
                 if i == 0:
                     out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_layernorm_relu_forward(
                         X, self.params['W' + str(i + 1)], self.params['b' + str(i + 1)], self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.ln_params[i]
                     )
+                    if self.use_dropout:
+                        out['out' + str(i+1)], cache['dropout' + str(i+1)] = dropout_forward(out['out' + str(i+1)], self.dropout_param)
+
                 elif i == self.num_layers - 1:
                     out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_forward(out['out' + str(i)], self.params['W' + str(i+1)], self.params['b' + str(i+1)])
                 else:
                     out['out' + str(i+1)], cache['cache' + str(i + 1)] = affine_layernorm_relu_forward(
                         out['out' + str(i)], self.params['W' + str(i + 1)], self.params['b' + str(i+1)], self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.ln_params[i]
                     )
+                    if self.use_dropout:
+                        out['out' + str(i+1)], cache['dropout' + str(i+1)] = dropout_forward(out['out' + str(i+1)], self.dropout_param)
+
 
         else:
             for i in range(self.num_layers):
+                
                     if i == 0:
                         out['out' + str(i+1)], cache['cache' + str(i+1)] = affine_relu_forward(X, self.params['W' + str(i+1)], self.params['b' + str(i+1)])
+                        if self.use_dropout:
+                            out['out' + str(i+1)], cache['dropout' + str(i+1)] = dropout_forward(out['out' + str(i+1)], self.dropout_param)
+
                     elif i == self.num_layers - 1:
                         out['out' + str(i+1)], cache['cache' + str(i+1)] = affine_forward(out['out' + str(i)], self.params['W' + str(i+1)], self.params['b' + str(i+1)])
                     else:
                         out['out' + str(i+1)], cache['cache' + str(i+1)] = affine_relu_forward(out['out' + str(i)], self.params['W' + str(i+1)], self.params['b' + str(i+1)])
+                        if self.use_dropout:
+                            out['out' + str(i+1)], cache['dropout' + str(i+1)] = dropout_forward(out['out' + str(i+1)], self.dropout_param)
+
+
+        
 
         scores = out['out' + str(self.num_layers)]
        
@@ -246,6 +269,8 @@ class FullyConnectedNet(object):
                 if i == self.num_layers:
                     dout, grads['W' + str(i)], grads['b' + str(i)] = affine_backward(dout, cache['cache' + str(i)])
                 else:
+                    if self.use_dropout:
+                        dout = dropout_backward(dout, cache['dropout' + str(i)])
                     dout, grads['W' + str(i)], grads['b' + str(i)], grads['gamma' + str(i)], grads['beta' + str(i)] = affine_batchnorm_relu_backward(
                         dout, cache['cache'+str(i)])
                 grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
@@ -255,6 +280,9 @@ class FullyConnectedNet(object):
                 if i == self.num_layers:
                     dout, grads['W' + str(i)], grads['b' + str(i)] = affine_backward(dout, cache['cache' + str(i)])
                 else:
+                    if self.use_dropout:
+                        dout = dropout_backward(dout, cache['dropout' + str(i)])
+                    
                     dout, grads['W' + str(i)], grads['b' + str(i)], grads['gamma' + str(i)], grads['beta' + str(i)] = affine_layernorm_relu_backward(
                         dout, cache['cache'+str(i)])
                 grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
@@ -265,6 +293,9 @@ class FullyConnectedNet(object):
                 if i == self.num_layers:
                     dout, grads['W' + str(i)], grads['b' + str(i)] = affine_backward(dout, cache['cache' + str(i)])
                 else:
+                    if self.use_dropout:
+                        dout = dropout_backward(dout, cache['dropout' + str(i)])
+                    
                     dout, grads['W' + str(i)], grads['b' + str(i)] = affine_relu_backward(dout, cache['cache' + str(i)])
                 grads['W' + str(i)] += self.reg * self.params['W' + str(i)]
                 
