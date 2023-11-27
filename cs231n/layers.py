@@ -621,7 +621,21 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+    x_pad = np.pad(x, ((0,0), (0,0), (pad, pad), (pad, pad)), 'constant')
+    H_prime = 1 + (H + 2*pad - HH)//stride
+    W_prime = 1 + (W + 2*pad - WW)//stride
+    out = np.zeros((N, F, H_prime, W_prime))
+
+    for n in range(N):
+      for i in range(F):
+        for j in range(H_prime):
+          for k in range(W_prime):
+            x_region = x_pad[n, :, j*stride:j*stride+HH, k*stride:k*stride+WW]
+            out[n, i, j, k] = (x_region * w[i, :, :, :]).sum() + b[i]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -649,7 +663,25 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dx, dw, db = np.zeros_like(cache[0]), np.zeros_like(cache[1]), np.zeros_like(cache[2])
+    N, C, H, W = cache[0].shape
+    F, C, HH, WW = cache[1].shape
+    pad = cache[3]['pad']
+    stride = cache[3]['stride']
+    x_pad = np.pad(cache[0], ((0,0), (0,0), (pad, pad), (pad, pad)), 'constant')
+    H_prime = dout.shape[2]
+    W_prime = dout.shape[3]
+    dx_pad = np.zeros_like(x_pad)
+
+    for n in range(N):
+      for i in range(F):
+        for j in range(H_prime):
+          for k in range(W_prime):
+            x_region = x_pad[n, :, j*stride:j*stride + HH, k*stride: k*stride + WW]
+            dx_pad[n, :, j*stride:j*stride + HH, k*stride: k*stride + WW] += cache[1][i, :, :, :] * dout[n, i, j, k]
+            dw[i, :, :, :] += x_region * dout[n, i, j, k]
+            db[i] += dout[n, i, j, k]
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
