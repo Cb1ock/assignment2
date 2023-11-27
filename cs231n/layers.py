@@ -682,7 +682,7 @@ def conv_backward_naive(dout, cache):
             dw[i, :, :, :] += x_region * dout[n, i, j, k]
             db[i] += dout[n, i, j, k]
 
-
+    dx = dx_pad[:, :, pad:pad+H, pad:pad+W] # (N, C, H, W)
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -716,7 +716,20 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    HH = pool_param['pool_height']
+    WW = pool_param['pool_width']
+    stride = pool_param['stride']
+
+    H_prime = 1 + (H - HH)//stride
+    W_prime = 1 + (W - WW)//stride
+    out = np.zeros((N, C, H_prime, W_prime))
+
+    for i in range(N):
+      for j in range(C):
+        for k in range(H_prime):
+          for l in range(W_prime):
+            out[i, j, k, l] = np.max(x[i, j, k*stride:k*stride+HH, l*stride:l*stride+WW])
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -742,7 +755,24 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x = cache[0]
+    dx = np.zeros_like(cache[0])
+    N, C, H, W = cache[0].shape
+    HH = cache[1]['pool_height']
+    WW = cache[1]['pool_width']
+    stride = cache[1]['stride']
+
+    H_out = 1 + (H - HH) // stride
+    W_out = 1 + (W - WW) // stride
+
+
+    for n in range(N):
+       for i in range(C):
+          for j in range(H_out):
+             for k in range(W_out):
+                x_region = x[n, i, j*stride:j*stride+HH, k*stride:k*stride+WW]
+                mask = (x_region == x_region.max())
+                dx[n, i, j*stride:j*stride+HH, k*stride:k*stride+WW] += dout[n,i,j,k] * mask
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

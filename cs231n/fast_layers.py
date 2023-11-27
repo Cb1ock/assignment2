@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 
 try:
-    from .im2col_cython import col2im_cython, im2col_cython
+    from cs231n.im2col_cython import col2im_cython, im2col_cython
     from .im2col_cython import col2im_6d_cython
 except ImportError:
     print("""=========== You can safely ignore the message below if you are NOT working on ConvolutionalNetworks.ipynb ===========""")
