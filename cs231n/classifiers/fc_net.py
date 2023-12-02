@@ -260,7 +260,11 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
        
-        loss, dout = softmax_loss(scores, y)
+
+        loss, dout = softmax_loss(scores, y) # 仅仅当计算损失的时候才会用softmax，推理（即算一遍前向得到分数）的时候不需要
+
+
+
         for i in range(self.num_layers):
             loss += 0.5 * self.reg * np.sum(self.params['W' + str(i+1)] ** 2)
 

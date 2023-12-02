@@ -63,7 +63,13 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        self.params['W1'] = np.random.normal(0, weight_scale, (num_filters, input_dim[0], filter_size, filter_size))
+        print(self.params['W1'].shape)
+        self.params['b1'] = np.zeros(num_filters)
+        self.params['W2'] = np.random.normal(0, weight_scale, size=(num_filters *input_dim[1] *input_dim[2] // 4, hidden_dim))
+        self.params['b2'] = np.zeros(hidden_dim)
+        self.params['W3'] = np.random.normal(0, weight_scale, size=(hidden_dim, num_classes))
+        self.params['b3'] = np.zeros(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -78,6 +84,23 @@ class ThreeLayerConvNet(object):
         Evaluate loss and gradient for the three-layer convolutional network.
 
         Input / output: Same API as TwoLayerNet in fc_net.py.
+        """
+        """Compute loss and gradient for the fully connected net.
+        
+        Inputs:
+        - X: Array of input data of shape (N, d_1, ..., d_k)
+        - y: Array of labels, of shape (N,). y[i] gives the label for X[i].
+
+        Returns:
+        If y is None, then run a test-time forward pass of the model and return:
+        - scores: Array of shape (N, C) giving classification scores, where
+            scores[i, c] is the classification score for X[i] and class c.
+
+        If y is not None, then run a training-time forward and backward pass and
+        return a tuple of:
+        - loss: Scalar value giving the loss
+        - grads: Dictionary with the same keys as self.params, mapping parameter
+            names to gradients of the loss with respect to those parameters.
         """
         W1, b1 = self.params["W1"], self.params["b1"]
         W2, b2 = self.params["W2"], self.params["b2"]
@@ -102,7 +125,11 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        out1, cache1 = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        out2, cache2 = affine_relu_forward(out1, W2, b2)
+        out3, cache3 = affine_forward(out2, W3, b3)
+
+        scores = out3
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -125,7 +152,13 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dout = softmax_loss(scores, y)
+
+        loss += 0.5*self.reg*(np.sum(W1**2)+np.sum(W2**2)+np.sum(W3**2))
+
+        dout, grads['W3'], grads['b3'] = affine_backward(dout, cache3)
+        dout, grads['W2'], grads['b2'] = affine_relu_backward(dout, cache2)
+        dout, grads['W1'], grads['b1'] = conv_relu_pool_backward(dout, cache1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
